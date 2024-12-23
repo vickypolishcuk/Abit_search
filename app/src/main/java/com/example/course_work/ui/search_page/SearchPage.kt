@@ -565,6 +565,7 @@ fun SearchPage(
                                 else -> ""
                             }
                             searchFunViewModel.search(
+                                context,
                                 pib,
                                 currentOption,
                                 regionsList.find { it.name == selectedRegion }!!.href
