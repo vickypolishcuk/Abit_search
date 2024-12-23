@@ -4,7 +4,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class User(
-    val username: String,
-    val password: String,
-    val history: MutableList<History> = mutableListOf()
+    val userId: String = "",
+    val username: String = "",
+    val password: String = "",
+    val history: List<History> = mutableListOf()
 )

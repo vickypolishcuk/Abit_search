@@ -1,5 +1,7 @@
 package com.example.course_work.ui.history_page
 
+import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -36,12 +38,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.course_work.functions.LoginViewModel
-import com.example.course_work.functions.clearCurrentUser
-import com.example.course_work.functions.dataStore
 import com.example.course_work.models.History
 import com.example.course_work.ui.fixed_element.Footer
 import com.example.course_work.ui.fixed_element.UserMenu
@@ -51,7 +49,8 @@ import com.example.course_work.ui.theme.LightYellow
 import com.example.course_work.ui.theme.Title
 import kotlinx.coroutines.launch
 import com.example.course_work.functions.HistoryViewModel
-import com.example.course_work.functions.clearUserHistory
+import com.example.course_work.functions.clearCurrentUser
+import com.example.course_work.functions.clearUserHistoryFirestore
 import com.example.course_work.functions.getCurrentUser
 import com.example.course_work.models.Search
 import com.example.course_work.ui.icons.AppIcons
@@ -69,9 +68,12 @@ fun HistoryPage(
     val context = LocalContext.current
     val viewModel: HistoryViewModel = viewModel()
     val history by viewModel.history.collectAsState()
+    val currentUser = getCurrentUser(context)
 
-    LaunchedEffect(Unit) {
-        viewModel.loadUserHistory(context) // Завантаження історії при першому запуску
+    if (currentUser != null) {
+        LaunchedEffect(Unit) {
+            viewModel.loadUserHistory(currentUser) // Завантаження історії при першому запуску
+        }
     }
     Column(
         modifier = Modifier
@@ -107,8 +109,18 @@ fun HistoryPage(
                         onClick = {
                             coroutineScope.launch {
                                 val username = getCurrentUser(context)!!
-                                clearUserHistory(context, username)
-                                viewModel.loadUserHistory(context)
+                                clearUserHistoryFirestore(
+                                    username = username,
+                                    onSuccess = {
+                                        // Після успішного очищення історії оновлюємо ViewModel
+                                        viewModel.loadUserHistory(username)
+                                        showDialog = false // Закриваємо діалог
+                                    },
+                                    onFailure = { exception ->
+                                        // Обробка помилки
+                                        Log.e("ConfirmButton", "Error clearing user history", exception)
+                                    }
+                                )
                             }
                             showDialog = false // Закриваємо діалог
                         }
@@ -181,12 +193,14 @@ fun HistoryPage(
             fun2 = {
                 // Розлогінення
                 coroutineScope.launch {
-                    context.dataStore.edit { preferences ->
-                        preferences.remove(stringPreferencesKey("username"))
-                        preferences.remove(stringPreferencesKey("password"))
+                    val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                    with(sharedPreferences.edit()) {
+                        remove("username")
+                        remove("password")
+                        apply()
                     }
                     isDialogVisible = false
-                    clearCurrentUser(context)
+                    clearCurrentUser(context) // Виклик нової функції
                     loginViewModel.logOut()
                     goBack()
                 }

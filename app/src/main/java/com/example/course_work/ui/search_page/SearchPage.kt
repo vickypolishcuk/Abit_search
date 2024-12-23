@@ -1,5 +1,6 @@
 package com.example.course_work.ui.search_page
 
+import android.content.Context
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -43,14 +44,11 @@ import kotlinx.coroutines.launch
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.course_work.functions.LoginViewModel
 import com.example.course_work.functions.SearchFunViewModel
-import com.example.course_work.functions.addHistoryToUser
+import com.example.course_work.functions.addHistoryItem
 import com.example.course_work.functions.clearCurrentUser
-import com.example.course_work.functions.dataStore
 import com.example.course_work.functions.getCurrentUser
 import com.example.course_work.models.History
 import com.example.course_work.models.Regions
@@ -83,7 +81,7 @@ fun SearchPage(
     val scrollState = rememberScrollState() // Стейт для прокрутки меню
     val context = LocalContext.current
     val showDialog = remember { mutableStateOf(false) }
-    val showWaitingMessage = remember { mutableStateOf(false) }
+    val isParsing by searchFunViewModel.isParsing.collectAsState()
     var errorMessage by remember { mutableStateOf("") }
 
     var name by remember { mutableStateOf("") } // Стан тексту
@@ -544,7 +542,6 @@ fun SearchPage(
             Button(
                 onClick = {
                     coroutineScope.launch {
-                        showWaitingMessage.value = true
                         if (isValidText(surname) && isValidText(name) && isValidText(patronymic)) {
                             surname = surname.split(" ").firstOrNull().orEmpty()
                             val pib =
@@ -567,17 +564,21 @@ fun SearchPage(
                                 }
                                 else -> ""
                             }
-                            searchFunViewModel.search(pib, currentOption, regionsList.find { it.name == selectedRegion }!!.href)
-                            showWaitingMessage.value = false
-                            if (isLoggedIn) {
-                                val currentUser = getCurrentUser(context)!!
-                                println("currentUser=${currentUser}")
-                                val currentDate = SimpleDateFormat(
-                                    "dd.MM.yyyy",
-                                    Locale.getDefault()
-                                ).format(Date())
-                                val query = History(pib, currentOption, selectedRegion, point, currentDate, searchResults)
-                                addHistoryToUser(context, currentUser, query)
+                            searchFunViewModel.search(
+                                pib,
+                                currentOption,
+                                regionsList.find { it.name == selectedRegion }!!.href
+                            ) { results ->
+                                if (isLoggedIn) {
+                                    val currentUser = getCurrentUser(context)!!
+                                    println("currentUser=${currentUser}")
+                                    val currentDate = SimpleDateFormat(
+                                        "dd.MM.yyyy",
+                                        Locale.getDefault()
+                                    ).format(Date())
+                                    val query = History(pib, currentOption, selectedRegion, point, currentDate, results)
+                                    addHistoryItem(currentUser, query) // Викликається після завершення парсингу
+                                }
                             }
                         } else {
                             showDialog.value = true
@@ -600,7 +601,7 @@ fun SearchPage(
             }
             Spacer(modifier = Modifier.height(40.dp))
 
-            if (showWaitingMessage.value) {
+            if (isParsing) {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
@@ -660,12 +661,15 @@ fun SearchPage(
                 if (isLoggedIn) {
                     // Розлогінення
                     coroutineScope.launch {
-                        context.dataStore.edit { preferences ->
-                            preferences.remove(stringPreferencesKey("username"))
-                            preferences.remove(stringPreferencesKey("password"))
+                        val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                        with(sharedPreferences.edit()) {
+                            remove("username")
+                            remove("password")
+                            apply()
                         }
+
                         isDialogVisible = false
-                        clearCurrentUser(context)
+                        clearCurrentUser(context) // Виклик нової функції
                         loginViewModel.logOut()
                     }
                 } else {

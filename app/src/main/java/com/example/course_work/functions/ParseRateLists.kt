@@ -347,6 +347,7 @@ suspend fun parseRateList(parameter: String): List<RateData> = withContext(Dispa
 
 suspend fun getUniversitiesByRegion(regionUrl: String, year: String): List<UniversityData> = withContext(Dispatchers.IO) {
     return@withContext try {
+        trustAllCertificates()
         // Формуємо URL для одного регіону
         val url = "https://abit-poisk.org.ua$regionUrl".replace("2024", year)
         try {
@@ -417,15 +418,11 @@ suspend fun parseSearchAsync(
             }
         }
     }
-
     // Надсилаємо університети в канал
     universitiesList.forEach { channel.send(it) }
-
     channel.close() // Закриваємо канал, коли всі університети були відправлені
     workerJobs.joinAll()
-
     data
-
 }
 
 private suspend fun parseUniversity(

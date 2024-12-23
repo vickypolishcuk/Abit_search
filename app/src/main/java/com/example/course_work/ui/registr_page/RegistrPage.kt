@@ -28,9 +28,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.course_work.functions.getUsers
-import com.example.course_work.functions.saveUser
-import com.example.course_work.models.User
+import com.example.course_work.functions.getUsersFromFirestore
+import com.example.course_work.functions.saveUserToFirestore
 import com.example.course_work.ui.fixed_element.Footer
 import com.example.course_work.ui.fixed_element.UserMenu
 import com.example.course_work.ui.fixed_element.showErrorDialog
@@ -167,16 +166,35 @@ fun RegistrPage(
             Button(
                 onClick = {
                     coroutineScope.launch {
-                        val userList = getUsers(context)
                         if (textPassword != "" && textName != "") {
                             if (textPassword == textPasswordRepeat) {
-                                if (userList.none { it.username == textName }) {
-                                    saveUser(context, User(textName, textPassword))
-                                    goToLogin()
-                                } else {
-                                    showDialog.value = true
-                                    errorMessage = "Користувач з таким іменем уже існує. Будь ласка введіть інше ім'я"
-                                }
+                                getUsersFromFirestore(
+                                    onSuccess = { savedUsers ->
+                                        if (savedUsers.none { it.username == textName }) {
+                                            saveUserToFirestore(
+                                                username = textName,
+                                                password = textPassword,
+                                                onSuccess = {
+                                                    // Користувача успішно збережено
+                                                    goToLogin()
+                                                },
+                                                onFailure = { exception ->
+                                                    // Помилка при збереженні користувача
+                                                    showDialog.value = true
+                                                    errorMessage = exception.message ?: "Помилка при збереженні користувача."
+                                                }
+                                            )
+                                        } else {
+                                            showDialog.value = true
+                                            errorMessage = "Користувач з таким іменем уже існує. Будь ласка введіть інше ім'я"
+                                        }
+                                    },
+                                    onFailure = { exception ->
+                                        // Обробка помилки
+                                        showDialog.value = true
+                                        println("Помилка при отриманні користувачів: ${exception.message}")
+                                    }
+                                )
                             } else {
                                 showDialog.value = true
                                 errorMessage = "Паролі не збігаються."

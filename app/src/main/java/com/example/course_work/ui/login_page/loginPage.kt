@@ -30,7 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.course_work.functions.LoginViewModel
-import com.example.course_work.functions.getUsers
+import com.example.course_work.functions.getUsersFromFirestore
 import com.example.course_work.functions.saveCurrentUser
 import com.example.course_work.ui.fixed_element.Footer
 import com.example.course_work.ui.fixed_element.UserMenu
@@ -143,16 +143,33 @@ fun LoginPage(
             Button(
                 onClick = {
                     coroutineScope.launch {
-                        val savedUsers = getUsers(context) // Отримуємо список усіх збережених користувачів
-                        val matchedUser = savedUsers.find { it.username == textName && it.password == textPassword }
-                        if (matchedUser != null) {
-                            // Успішний вхід
-                            saveCurrentUser(context, matchedUser.username)
-                            loginViewModel.logIn()
-                            goBack()
-                        } else {
-                            // Помилка авторизації
+                        try {
+                            // Отримуємо список користувачів із Firestore
+                            getUsersFromFirestore(
+                                onSuccess = { savedUsers ->
+                                    val matchedUser = savedUsers.find {
+                                        it.username == textName && it.password == textPassword
+                                    }
+                                    if (matchedUser != null) {
+                                        // Успішний вхід
+                                        saveCurrentUser(context, matchedUser.username)
+                                        loginViewModel.logIn()
+                                        goBack()
+                                    } else {
+                                        // Помилка авторизації
+                                        showDialog.value = true
+                                    }
+                                },
+                                onFailure = { exception ->
+                                    // Обробка помилки
+                                    showDialog.value = true
+                                    println("Помилка при отриманні користувачів: ${exception.message}")
+                                }
+                            )
+                        } catch (e: Exception) {
+                            // Загальна обробка помилок
                             showDialog.value = true
+                            println("Невідома помилка: ${e.message}")
                         }
                     }
                 },

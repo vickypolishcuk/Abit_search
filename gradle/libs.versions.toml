@@ -1,5 +1,6 @@
 [versions]
 agp = "8.6.1"
+firebaseBom = "33.7.0"
 kotlin = "1.9.0"
 coreKtx = "1.13.1"
 junit = "4.13.2"
@@ -10,11 +11,15 @@ activityCompose = "1.9.2"
 composeBom = "2024.04.01"
 navigationCompose = "2.8.4"
 kotlinx-serialization = "1.6.0"
+firebaseFirestoreKtx = "25.1.1"
 #selenium = "4.5.0"
 
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -31,7 +36,8 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 jsoup = "org.jsoup:jsoup:1.14.3"
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version = "1.0.0" }
+datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version = "1.1.1" }
+firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
 #datastore-proto = { group = "androidx.datastore", name = "datastore", version = "1.0.0" }
 #selenium-java = { module = "org.seleniumhq.selenium:selenium-java", version.ref = "selenium" }
 #selenium-chrome-driver = { module = "org.seleniumhq.selenium:selenium-chrome-driver", version.ref = "selenium" }
@@ -41,3 +47,4 @@ datastore-preferences = { group = "androidx.datastore", name = "datastore-prefer
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+google-services = { id = "com.google.gms.google-services", version = "4.4.2" }
