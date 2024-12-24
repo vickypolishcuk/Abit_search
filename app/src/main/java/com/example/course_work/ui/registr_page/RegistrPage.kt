@@ -25,7 +25,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.course_work.functions.getUsersFromFirestore
@@ -47,11 +46,9 @@ fun RegistrPage(
     goToLogin: () -> Unit,
     goToRegistr: () -> Unit,
 ) {
-    var isDialogVisible by remember { mutableStateOf(false) }
-    val login by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
     val showDialog = remember { mutableStateOf(false) }
+    var isDialogVisible by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
     var errorMessage by remember { mutableStateOf("") }
 
     Column(
@@ -76,11 +73,11 @@ fun RegistrPage(
                         .width(262.dp)
                 )
             }
-            // Поле вводу
             Spacer(modifier = Modifier.height(50.dp))
             var textName by remember { mutableStateOf("") } // Стан тексту
             var textPassword by remember { mutableStateOf("") } // Стан тексту
             var textPasswordRepeat by remember { mutableStateOf("") } // Стан тексту
+            // Поле вводу
             Box(
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
@@ -97,7 +94,6 @@ fun RegistrPage(
                         fontSize = 16.sp
                     )
                 }
-                // BasicTextField для вводу тексту
                 BasicTextField(
                     value = textName,
                     onValueChange = {
@@ -124,7 +120,6 @@ fun RegistrPage(
                         fontSize = 16.sp
                     )
                 }
-                // BasicTextField для вводу тексту
                 BasicTextField(
                     value = textPassword,
                     onValueChange = {
@@ -151,7 +146,6 @@ fun RegistrPage(
                         fontSize = 16.sp
                     )
                 }
-                // BasicTextField для вводу тексту
                 BasicTextField(
                     value = textPasswordRepeat,
                     onValueChange = {
@@ -234,7 +228,7 @@ fun RegistrPage(
                 // Перехід до авторизації
                 goToLogin()
             },
-            login
+            false
         )
     }
 }

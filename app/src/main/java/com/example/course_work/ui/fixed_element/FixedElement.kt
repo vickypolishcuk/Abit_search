@@ -152,7 +152,7 @@ fun Footer(navigate: () -> Unit, onIconClick: () -> Unit, mainPage: Boolean = fa
                     modifier = Modifier.size(27.dp)
                 )
             }
-            // Коло з іконкою, яке виступає за межі прямокутника
+            // Коло з іконкою користувача
             Box(
                 modifier = Modifier
                     .size(50.dp) // Розмір кола
@@ -161,7 +161,7 @@ fun Footer(navigate: () -> Unit, onIconClick: () -> Unit, mainPage: Boolean = fa
                     .clickable { onIconClick() }, // Відкриття віконця при натисканні
                 contentAlignment = Alignment.Center
             ) {
-                // Іконка всередині кола
+                // Іконка користувача
                 Icon(
                     painter = AppIcons.User(), // Використання власної іконки
                     contentDescription = "User Icon",

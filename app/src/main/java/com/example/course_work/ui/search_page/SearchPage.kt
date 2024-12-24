@@ -71,27 +71,31 @@ fun SearchPage(
     regionsList: List<Regions>,
     searchQuery: List<Search>? = null
 ) {
+    val isParsing by searchFunViewModel.isParsing.collectAsState()
     val isLoggedIn by loginViewModel.isLoggedIn.collectAsState()
     var isDialogVisible by remember { mutableStateOf(false) }
-    val searchResults by searchFunViewModel.searchResults.collectAsState() // Запис даних у пам'ять
+    val showDialog = remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
-    var yearExpanded by remember { mutableStateOf(false) } // Стан для відкриття/закриття меню
-    var regionExpanded by remember { mutableStateOf(false) } // Стан для відкриття/закриття меню
-    var isExpanded by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState() // Стейт для прокрутки меню
     val context = LocalContext.current
-    val showDialog = remember { mutableStateOf(false) }
-    val isParsing by searchFunViewModel.isParsing.collectAsState()
-    var errorMessage by remember { mutableStateOf("") }
 
+    // Стани для відкриття/закриття вікон
+    var yearExpanded by remember { mutableStateOf(false) }
+    var regionExpanded by remember { mutableStateOf(false) }
+    var isExpanded by remember { mutableStateOf(false) }
+
+    // Змінні для введення даних користувачем
     var name by remember { mutableStateOf("") } // Стан тексту
     var surname by remember { mutableStateOf("") } // Стан тексту
     var patronymic by remember { mutableStateOf("") } // Стан тексту
     var point by remember { mutableStateOf("") } // Стан тексту
 
+    // Змінні для списків та результатів
     val yearOptions = listOf("2024", "2023", "2022", "2021", "2020", "2019", "2018")
     var currentOption by remember { mutableStateOf("2024") } // Поточний вибір (рік)
     var selectedRegion by remember { mutableStateOf(regionsList.first().name) }
+    val searchResults by searchFunViewModel.searchResults.collectAsState() // Запис даних у пам'ять
 
     LaunchedEffect(searchQuery) {
         if (!searchQuery.isNullOrEmpty()) {
@@ -271,7 +275,7 @@ fun SearchPage(
                             .padding(bottom = 4.dp)
                     )
                     Spacer(modifier = Modifier.height(10.dp))
-                    // Поле вводу
+                    // Поле вибору
                     Box(
                         modifier = Modifier
                             .height(60.dp)
@@ -377,7 +381,7 @@ fun SearchPage(
                             .padding(bottom = 4.dp)
                     )
                     Spacer(modifier = Modifier.height(10.dp))
-                    // Поле вводу
+                    // Поле вибору
                     Box(
                         modifier = Modifier
                             .height(60.dp)
@@ -608,7 +612,8 @@ fun SearchPage(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Обробка даних, зачекайте будь ласка",
+                        text = "Обробка даних, зачекайте будь ласка. \nЯкщо після завершення пошуку" +
+                                " Ви не бачите результат, отже інформації з такими параметрами не існує.",
                         style = TextStyle(
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Normal,
@@ -623,7 +628,7 @@ fun SearchPage(
                 if (point != "") {
                     val filteredResults = searchResults.filter { search ->
                         // Порівнюємо середній бал документа (search.sbo) з введеним значенням (point)
-                        search.sbo == point // Змінити порівняння за потребою
+                        search.sbo == point
                     }
                     if (filteredResults.isNotEmpty()) {
                         // Проходимо по кожному елементу в списку і відображаємо CustomTable
@@ -670,7 +675,7 @@ fun SearchPage(
                         }
 
                         isDialogVisible = false
-                        clearCurrentUser(context) // Виклик нової функції
+                        clearCurrentUser(context) // Виклик функції очищення поточного користувача
                         loginViewModel.logOut()
                     }
                 } else {
@@ -692,7 +697,7 @@ fun CustomTable(searchResult: Search, goToRateList: () -> Unit) {
             .border(1.dp, color = Grey, shape = RoundedCornerShape(10.dp))
             .clickable { goToRateList() }
     ) {
-        // Верхній рядок з великим текстом
+        // Верхній рядок
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -725,7 +730,6 @@ fun CustomTable(searchResult: Search, goToRateList: () -> Unit) {
             )
         }
         HorizontalDivider(thickness = 1.dp, color = Grey)
-
         // Другий рядок
         Row(
             modifier = Modifier
@@ -765,9 +769,7 @@ fun CustomTable(searchResult: Search, goToRateList: () -> Unit) {
                 color = Color.Black,
             )
         }
-
         HorizontalDivider(thickness = 1.dp, color = Grey)
-
         // Третій рядок з предметами
         Row(
             modifier = Modifier.fillMaxWidth()
@@ -862,7 +864,6 @@ fun CustomTable(searchResult: Search, goToRateList: () -> Unit) {
                     }
                 }
                 HorizontalDivider(thickness = 1.dp, color = Grey)
-
                 // Рядок з сумою
                 Row(
                     modifier = Modifier

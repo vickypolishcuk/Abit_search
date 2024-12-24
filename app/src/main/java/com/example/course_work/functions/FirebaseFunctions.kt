@@ -95,7 +95,7 @@ fun clearUserHistoryFirestore(username: String, onSuccess: () -> Unit, onFailure
             // Знаходимо користувача за username
             val user = users.find { it.username == username }
             if (user != null) {
-                val userId = user.userId // Тепер отримуємо userId
+                val userId = user.userId // отримуємо userId
                 val db = FirebaseFirestore.getInstance()
                 db.collection("users").document(userId)
                     .update("history", emptyList<History>())
@@ -118,7 +118,7 @@ fun addHistoryItem(username: String, newHistoryItem: History) {
             // Знаходимо користувача за username
             val user = users.find { it.username == username }
             if (user != null) {
-                val userId = user.userId // Тепер отримуємо userId
+                val userId = user.userId // отримуємо userId
                 val db = FirebaseFirestore.getInstance()
 
                 db.collection("users").document(userId)
@@ -146,7 +146,7 @@ fun getHistory(username: String, onSuccess: (List<History>) -> Unit, onFailure: 
             // Знаходимо користувача за username
             val user = users.find { it.username == username }
             if (user != null) {
-                val userId = user.userId // Тепер отримуємо userId
+                val userId = user.userId // отримуємо userId
                 val db = FirebaseFirestore.getInstance()
 
                 db.collection("users").document(userId)

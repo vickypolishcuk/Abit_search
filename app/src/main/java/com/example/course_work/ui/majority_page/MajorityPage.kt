@@ -32,7 +32,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.course_work.functions.LoginViewModel
+import com.example.course_work.functions.MajorityViewModel
 import com.example.course_work.functions.clearCurrentUser
 import com.example.course_work.functions.getUniversitiesInfo
 import com.example.course_work.functions.parseMajority
@@ -62,23 +64,26 @@ fun MajorityPage(
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
+    // Підключення моделі даних та отримання значень
+    val majorityViewModel: MajorityViewModel = viewModel()
+    val majorities by majorityViewModel.majorities.collectAsState()
+    val universityInfo by majorityViewModel.universityInfo.collectAsState()
+
+    val searchQuery = remember { mutableStateOf("") }
+    val filteredMajorityList = remember { mutableStateOf<List<Majority>>(emptyList()) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(LightYellow) // Світло-жовтий фон
     ) {
-        // Стан для збереження завантажених даних
-        val majorityList = remember { mutableStateOf<List<Majority>>(emptyList()) }
-        val searchQuery = remember { mutableStateOf("") }
-        val filteredMajorityList = remember { mutableStateOf<List<Majority>>(emptyList()) }
-        val mutuniversityInfo = remember { mutableStateOf<University?>(null) }
-
         // Завантаження даних у фоновому режимі
         LaunchedEffect(Unit) {
             try {
-                majorityList.value = parseMajority(universityHref)
-                filteredMajorityList.value = majorityList.value
-                mutuniversityInfo.value = getUniversitiesInfo(regionHref, universityHref)
+                val loadedMajorities = parseMajority(universityHref)
+                majorityViewModel.setMajorities(loadedMajorities)
+                val university = getUniversitiesInfo(regionHref, universityHref)
+                majorityViewModel.setUniversityInfo(university)
             } catch (e: Exception) {
                 println("Помилка при завантаженні даних: ${e.message}")
             }
@@ -114,7 +119,7 @@ fun MajorityPage(
                             value = searchQuery.value,
                             onValueChange = { query ->
                                 searchQuery.value = query
-                                filteredMajorityList.value = search(query, majorityList.value)
+                                filteredMajorityList.value = search(query, majorities)
                             },
                             modifier = Modifier.fillMaxWidth(),
                             textStyle = Input
@@ -153,23 +158,29 @@ fun MajorityPage(
                         .width(262.dp)
                 )
             }
-            // Поле вводу
             Spacer(modifier = Modifier.height(80.dp))
 
             // Виведення інформації про університет
-            mutuniversityInfo.value?.let { CustomTableInfo(it) }
+            universityInfo?.let { CustomTableInfo(it) }
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Відображаємо таблицю для кожного елемента
-            if (filteredMajorityList.value.isNotEmpty()) {
-                filteredMajorityList.value.forEach { data ->
-                    if (data.href.isNotEmpty()) { // Перевірка, чи не порожній href
+            // Відображаємо таблицю для кожного елемента спеціальності
+            val displayList = if (searchQuery.value.isEmpty()) majorities else filteredMajorityList.value
+            if (displayList.isNotEmpty()) {
+                displayList.forEach { data ->
+                    if (data.href.isNotEmpty()) { // Перевірка, чи не порожній href (посилання)
                         CustomTable({ goToRateList(data.href) }, data)
                         Spacer(modifier = Modifier.height(7.dp))
                     }
                 }
             } else {
-                Text("Завантаження даних, зачекайте будь ласка..", modifier = Modifier.padding(16.dp), color = Color.Black)
+                Text(
+                    text = if (searchQuery.value.isEmpty()) {
+                        "Завантаження даних, зачекайте будь ласка.."
+                    } else {
+                        "Не знайдено спеціальностей за вашим запитом"
+                    },
+                    modifier = Modifier.padding(16.dp), color = Color.Black)
             }
             Spacer(modifier = Modifier.height(80.dp)) // Зсунення елементів вниз
         }
@@ -201,7 +212,7 @@ fun MajorityPage(
                         }
 
                         isDialogVisible = false
-                        clearCurrentUser(context) // Виклик нової функції
+                        clearCurrentUser(context) // Виклик функції очищення поточного користувача
                         loginViewModel.logOut()
                     }
                 } else {
@@ -214,6 +225,7 @@ fun MajorityPage(
     }
 }
 
+// Функція пошуку елементів за певним критерієм
 fun search(query: String, list: List<Majority>): List<Majority> {
     if (query.isEmpty()) return list
     return list.filter { majorityData ->
@@ -253,7 +265,6 @@ fun CustomTableInfo(universityInfo: University) {
             )
         }
         HorizontalDivider(thickness = 1.dp, color = Grey)
-        // Третій рядок з предметами
         Row (
             modifier = Modifier.fillMaxWidth()
                 .height(IntrinsicSize.Max),
@@ -351,7 +362,7 @@ fun CustomTable(goToRateList: (param: String) -> Unit, majorityData: Majority) {
             .border(1.dp, color = Grey, shape = RoundedCornerShape(10.dp))
             .clickable { goToRateList(majorityData.href) }
     ) {
-        // Верхній рядок з великим текстом
+        // Верхній рядок
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -384,7 +395,7 @@ fun CustomTable(goToRateList: (param: String) -> Unit, majorityData: Majority) {
             )
         }
         HorizontalDivider(thickness = 1.dp, color = Grey)
-        // Третій рядок з предметами
+        // Третій рядок
         Row(
             modifier = Modifier.fillMaxWidth()
                 .height(IntrinsicSize.Max),
@@ -467,7 +478,6 @@ fun CustomTable(goToRateList: (param: String) -> Unit, majorityData: Majority) {
                     }
                 }
                 HorizontalDivider(thickness = 1.dp, color = Grey)
-                // Рядок з сумою
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()

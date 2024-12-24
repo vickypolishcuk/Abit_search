@@ -23,8 +23,7 @@ fun sendNotification(context: Context, searchData: List<Search>) {
     val intent = Intent(context, MainActivity::class.java).apply {
         flags = Intent.FLAG_ACTIVITY_NEW_TASK
         val searchDataJson = Json.encodeToString(searchData)
-        println("searchDataJson=${searchDataJson}")
-        putExtra("updated_data", searchDataJson)  // передача даних
+        putExtra("updated_data", searchDataJson)  // передача даних через повідомлення
     }
 
     val pendingIntent = PendingIntent.getActivity(
@@ -37,12 +36,13 @@ fun sendNotification(context: Context, searchData: List<Search>) {
     val channelId = "fcm_default_channel"
     val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
     val notificationBuilder = NotificationCompat.Builder(context, channelId)
-        .setSmallIcon(R.mipmap.ic_launcher)
+        .setSmallIcon(R.drawable.main_icon)
         .setContentTitle("Пошук завершено")
-        .setContentText("Пошук завершився успішно! Ви можете переглянути результати вже зараз")
+        .setContentText("Пошук завершився успішно! Ви можете переглянути результати вже зараз.")
         .setAutoCancel(true)
         .setSound(defaultSoundUri)
         .setContentIntent(pendingIntent)
+        .setPriority(NotificationCompat.PRIORITY_HIGH)
 
     val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -58,7 +58,6 @@ fun sendNotification(context: Context, searchData: List<Search>) {
     val notificationId = System.currentTimeMillis().toInt()
     notificationManager.notify(notificationId, notificationBuilder.build())
 }
-
 
 fun sendNotificationToCurrentUser(context: Context, searchData: List<Search>) {
     println("sendNotificationToCurrentUser")

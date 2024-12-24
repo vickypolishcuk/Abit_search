@@ -11,17 +11,14 @@ import kotlinx.serialization.json.Json
 class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        println("onMessageReceived")
         remoteMessage.notification?.let {
-            // Якщо є сповіщення, можна показати його на екрані
+            // Якщо є сповіщення, показуємо його на екрані
             sendNotification(this, emptyList())
         }
-
         // Перевіряємо, чи є додаткові дані в повідомленні
         remoteMessage.data.isNotEmpty().let {
-            // Якщо є дані (наприклад, список пошукових результатів)
+            // Якщо є дані (список результатів пошуку)
             val searchDataJson = remoteMessage.data["updated_data"]
-            println("searchDataJson=${searchDataJson}")
             searchDataJson?.let {
                 val searchData: List<Search> = Json.decodeFromString(it)
                 // Тепер передаємо ці дані до методу sendNotification для відправки повідомлення

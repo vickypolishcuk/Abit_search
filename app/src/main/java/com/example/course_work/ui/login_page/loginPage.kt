@@ -50,10 +50,10 @@ fun LoginPage(
     goToLogin: () -> Unit,
     goToRegistr: () -> Unit,
 ) {
+    val showDialog = remember { mutableStateOf(false) }
     var isDialogVisible by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
-    val showDialog = remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -77,10 +77,10 @@ fun LoginPage(
                         .width(262.dp)
                 )
             }
-            // Поле вводу
             Spacer(modifier = Modifier.height(80.dp))
             var textName by remember { mutableStateOf("") } // Стан тексту
             var textPassword by remember { mutableStateOf("") } // Стан тексту
+            // Поле вводу
             Box(
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
@@ -97,7 +97,6 @@ fun LoginPage(
                         fontSize = 16.sp
                     )
                 }
-                // BasicTextField для вводу тексту
                 BasicTextField(
                     value = textName,
                     onValueChange = {
@@ -126,8 +125,6 @@ fun LoginPage(
                         fontSize = 16.sp
                     )
                 }
-
-                // BasicTextField для вводу тексту
                 BasicTextField(
                     value = textPassword,
                     onValueChange = {
@@ -137,7 +134,6 @@ fun LoginPage(
                     textStyle = Input
                 )
             }
-
             // Кнопка "Пошук"
             Spacer(modifier = Modifier.height(30.dp)) // Відступ
             Button(

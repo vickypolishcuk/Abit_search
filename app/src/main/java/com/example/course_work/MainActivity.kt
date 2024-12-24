@@ -31,14 +31,15 @@ import com.example.course_work.ui.majority_page.MajorityPage
 import com.example.course_work.ui.registr_page.RegistrPage
 import com.example.course_work.ui.rate_list_page.RateListPage
 import kotlinx.serialization.json.Json
-
 import android.Manifest
 import android.content.ContentValues.TAG
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import com.example.course_work.functions.getCurrentUser
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessaging
@@ -61,7 +62,7 @@ class MainActivity : ComponentActivity() {
         if (isGranted) {
             // FCM SDK (and your app) can post notifications.
         } else {
-            // TODO: Inform user that that your app will not show notifications.
+            // Inform user that that your app will not show notifications.
         }
     }
     private fun askNotificationPermission() {
@@ -72,7 +73,7 @@ class MainActivity : ComponentActivity() {
             ) {
                 // FCM SDK (and your app) can post notifications.
             } else if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
-                // TODO: display an educational UI explaining to the user the features that will be enabled
+                //       display an educational UI explaining to the user the features that will be enabled
                 //       by them granting the POST_NOTIFICATION permission. This UI should provide the user
                 //       "OK" and "No thanks" buttons. If the user selects "OK," directly request the permission.
                 //       If the user selects "No thanks," allow the user to continue without notifications.
@@ -93,7 +94,7 @@ class MainActivity : ComponentActivity() {
         )
 
         db.collection("notifications")
-            .document(token) // Використовуємо токен як унікальний ідентифікатор
+            .document(token) // Використовуємо токен як унікальний ідентифікатор документу
             .set(deviceData)
             .addOnSuccessListener {
                 Log.d("Firestore", "Token successfully saved to Firestore")
@@ -116,27 +117,31 @@ class MainActivity : ComponentActivity() {
                 // Get new FCM registration token
                 val token = task.result
                 Log.d("FCM", "FCM Token: $token")
-                // Зберігаємо токен для подальшого використання
+                // Зберігаємо токен в Firestore для подальшого використання
                 saveTokenToFirestore(token)
             })
             Course_workTheme {
+                val navController = rememberNavController()
                 val loginViewModel: LoginViewModel = viewModel()
                 val searchFunViewModel: SearchFunViewModel = viewModel()
-                val navController = rememberNavController()
+
                 val message = intent.getStringExtra("updated_data")
-                println("message=${message}")
-                message?.let {
-                    Log.d("SearchPage", "Received message: $it")
-                }
+
                 val regions = remember { mutableStateOf<List<Regions>>(emptyList()) }
                 val isDataLoaded = remember { mutableStateOf(false) }
+
+                val context = LocalContext.current
+                val user = getCurrentUser(context)
+                user?.let {
+                    loginViewModel.logIn()
+                }
                 LaunchedEffect(Unit) {
                     try {
                         regions.value = getRegions()
                         isDataLoaded.value = true
                         message?.let {
                             val searchData = Json.decodeFromString<List<Search>>(it)
-                            // Оновлюємо список пошуку, передавши дані до ViewModel або компонента
+                            // Оновлюємо список пошуку, передавши дані до ViewModel
                             searchFunViewModel.setSearchResults(searchData)
                         }
                     } catch (e: Exception) {

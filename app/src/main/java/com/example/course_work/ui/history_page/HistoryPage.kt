@@ -80,7 +80,6 @@ fun HistoryPage(
             .fillMaxSize()
             .background(LightYellow) // Світло-жовтий фон
     ) {
-        // Основний текст
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -90,7 +89,7 @@ fun HistoryPage(
                 },
             contentAlignment = Alignment.CenterEnd
         ) {
-            // Іконка всередині кола
+            // Іконка
             Icon(
                 painter = AppIcons.Basket(), // Використання власної іконки
                 contentDescription = "Basket Icon",
@@ -98,7 +97,7 @@ fun HistoryPage(
                 modifier = Modifier.size(30.dp) // Розмір іконки
             )
         }
-        // Діалог для підтвердження
+        // Діалог для підтвердження видалення
         if (showDialog) {
             AlertDialog(
                 onDismissRequest = { showDialog = false }, // Закрити діалог
@@ -144,6 +143,7 @@ fun HistoryPage(
         ) {
             Column {
                 Spacer(modifier = Modifier.height(30.dp))
+                // Основний текст
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
@@ -168,7 +168,6 @@ fun HistoryPage(
                         )
                     }
                 } else {
-                    // Прокручуваний список
                     history.indices.reversed().forEach { index ->
                         val searchQuery = history[index]
                         HistoryItem(searchQuery, goToSearchPage)
@@ -179,7 +178,6 @@ fun HistoryPage(
             }
         }
     }
-    // Нижня панель з іконкою
     Footer(goBack, onIconClick = { isDialogVisible = !isDialogVisible })
 
     // Вікно діалогу
@@ -200,7 +198,7 @@ fun HistoryPage(
                         apply()
                     }
                     isDialogVisible = false
-                    clearCurrentUser(context) // Виклик нової функції
+                    clearCurrentUser(context) // Виклик функції очищення поточного користувача
                     loginViewModel.logOut()
                     goBack()
                 }

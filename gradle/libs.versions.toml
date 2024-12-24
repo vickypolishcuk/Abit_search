@@ -12,7 +12,6 @@ composeBom = "2024.04.01"
 navigationCompose = "2.8.4"
 kotlinx-serialization = "1.6.0"
 firebaseFirestoreKtx = "25.1.1"
-#selenium = "4.5.0"
 
 
 [libraries]
@@ -39,10 +38,6 @@ jsoup = "org.jsoup:jsoup:1.14.3"
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version = "1.1.1" }
 firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
-#datastore-proto = { group = "androidx.datastore", name = "datastore", version = "1.0.0" }
-#selenium-java = { module = "org.seleniumhq.selenium:selenium-java", version.ref = "selenium" }
-#selenium-chrome-driver = { module = "org.seleniumhq.selenium:selenium-chrome-driver", version.ref = "selenium" }
-#appium = "io.appium:java-client:7.5.1"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -31,7 +31,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.course_work.functions.LoginViewModel
+import com.example.course_work.functions.RateListViwModel
 import com.example.course_work.functions.clearCurrentUser
 import com.example.course_work.functions.parseRateList
 import com.example.course_work.functions.parseMajorityInfo
@@ -58,24 +60,26 @@ fun RateListPage(
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
+    // Підключення моделі даних та отримання значень
+    val rateListViewModel: RateListViwModel = viewModel()
+    val rateData by rateListViewModel.rateData.collectAsState()
+    val majorityInfo by rateListViewModel.majorityInfo.collectAsState()
+
+    val searchQuery = remember { mutableStateOf("") }
+    val filteredList = remember { mutableStateOf<List<RateData>>(emptyList()) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(LightYellow) // Світло-жовтий фон
     ) {
-        // Стан для збереження завантажених даних
-        val rateList = remember { mutableStateOf<List<RateData>>(emptyList()) }
-        val searchQuery = remember { mutableStateOf("") }
-        val filteredList = remember { mutableStateOf<List<RateData>>(emptyList()) }
-        val majorityInfo = remember { mutableStateOf<MajorityInfo?>(null) }
-
         // Завантаження даних у фоновому режимі
         LaunchedEffect(Unit) {
             try {
-                rateList.value = parseRateList(parameter)
-                filteredList.value = rateList.value
-                majorityInfo.value = parseMajorityInfo(parameter)
-                println(majorityInfo)
+                val loadedRateList = parseRateList(parameter)
+                rateListViewModel.setRateData(loadedRateList)
+                val majority = parseMajorityInfo(parameter)
+                rateListViewModel.setMajorityInfo(majority)
             } catch (e: Exception) {
                 println("Помилка при завантаженні даних: ${e.message}")
             }
@@ -111,7 +115,7 @@ fun RateListPage(
                             value = searchQuery.value,
                             onValueChange = { query ->
                                 searchQuery.value = query
-                                filteredList.value = search(query, rateList.value)
+                                filteredList.value = search(query, rateData)
                             },
                             modifier = Modifier.fillMaxWidth(),
                             textStyle = Input
@@ -151,18 +155,25 @@ fun RateListPage(
                 )
             }
             Spacer(modifier = Modifier.height(80.dp))
-            // Відображаємо таблицю для кожного елемента
-            majorityInfo.value?.let { CustomTableInfo(it) }
+            // Відображаємо таблицю для елемента з інформацією про спеціальність
+            majorityInfo?.let { CustomTableInfo(it) }
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Відображаємо таблицю для кожного елемента
-            if (filteredList.value.isNotEmpty()) {
-                filteredList.value.take(1000).forEach { data -> // Обмеження виведення абітурієнтів до 1000 осіб
+            // Відображаємо таблицю для кожного елемента з рейтингового списку
+            val displayList = if (searchQuery.value.isEmpty()) rateData else filteredList.value
+            if (displayList.isNotEmpty()) {
+                displayList.take(1000).forEach { data -> // Обмеження виведення абітурієнтів до 1000 осіб
                     CustomTable(data)
                     Spacer(modifier = Modifier.height(7.dp))
                 }
             } else {
-                Text("Завантаження даних, зачекайте будь ласка.. \n\nМожливо ці дані відсутні. Спробуйте іншу спеціальність.", modifier = Modifier.padding(16.dp), color = Color.Black)
+                Text(
+                    text = if (searchQuery.value.isEmpty()) {
+                        "Завантаження даних, зачекайте будь ласка.."
+                    } else {
+                        "Не знайдено даних за вашим запитом"
+                    },
+                    modifier = Modifier.padding(16.dp), color = Color.Black)
             }
             Spacer(modifier = Modifier.height(80.dp)) // Зсунення елементів вниз
         }
@@ -192,10 +203,9 @@ fun RateListPage(
                             remove("password")
                             apply()
                         }
-
                         isDialogVisible = false
-                        clearCurrentUser(context) // Виклик нової функції
-                        loginViewModel.logOut()
+                        clearCurrentUser(context) // Виклик функції очищення поточного користувача
+                        loginViewModel.logOut() // Розголінення
                     }
                 } else {
                     // Перехід до авторизації
@@ -206,7 +216,7 @@ fun RateListPage(
         )
     }
 }
-
+// Функція пошуку елементів за певним критерієм
 fun search(query: String, list: List<RateData>): List<RateData> {
     if (query.isEmpty()) return list
     return list.filter { rateData ->
@@ -247,7 +257,6 @@ fun CustomTableInfo(majorityInfo: MajorityInfo) {
             )
         }
         HorizontalDivider(thickness = 1.dp, color = Grey)
-        // Верхній рядок з великим текстом
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -264,7 +273,6 @@ fun CustomTableInfo(majorityInfo: MajorityInfo) {
             )
         }
         HorizontalDivider(thickness = 1.dp, color = Grey)
-        // Верхній рядок з великим текстом
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -281,7 +289,7 @@ fun CustomTableInfo(majorityInfo: MajorityInfo) {
             )
         }
         HorizontalDivider(thickness = 1.dp, color = Grey)
-        // Третій рядок з предметами
+        // Рядок з предметами
         Row (
             modifier = Modifier.fillMaxWidth()
                 .height(IntrinsicSize.Max),
@@ -329,7 +337,6 @@ fun CustomTable(rateData: RateData) {
             .background(LightYellow, shape = RoundedCornerShape(10.dp))
             .border(1.dp, color = Grey, shape = RoundedCornerShape(10.dp))
     ) {
-        // Верхній рядок з великим текстом
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -404,7 +411,6 @@ fun CustomTable(rateData: RateData) {
             }
         }
         HorizontalDivider(thickness = 1.dp, color = Grey)
-        // Другий рядок
         Row(
             modifier = Modifier
                 .fillMaxWidth()

@@ -62,7 +62,7 @@ fun FilterRateLists(
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    // Масиви опцій
+    // Списки опцій
     val yearOptions = listOf("2024", "2023", "2022", "2021", "2020", "2019", "2018")//, "2017", "2016", "2015", "2014")
     val listOfRegions = regionsList
 
@@ -80,7 +80,6 @@ fun FilterRateLists(
         isLoadedUniversities = true
         selectedInstitution = selectedUniversity!!.name
     }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -173,28 +172,37 @@ fun FilterRateLists(
                 }
             }
             Spacer(modifier = Modifier.height(30.dp)) // Відступ
-            Button(
-                onClick = {
-                    val parameter = selectedUniversity!!.href.replace("2024", selectedYear)
-                    val parameter2 = regionsList.find { it.name == selectedRegion }!!.href.replace("2024", selectedYear)
-                    println("parameter=${parameter}, parameter2=${parameter2}")
-                    goToMajority(parameter, parameter2)
-                },
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .width(150.dp)
-                    .height(50.dp)
-                    .fillMaxWidth(0.8f)
-                    .background(LightBlue, shape = RoundedCornerShape(10.dp)),
-                colors = ButtonDefaults.buttonColors(containerColor = LightBlue)
-            ) {
-                Text(text = "Пошук", color = Color.Black, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+            if (isLoadedUniversities) {
+                Button(
+                    onClick = {
+                        val parameter = selectedUniversity!!.href.replace("2024", selectedYear)
+                        val parameter2 =
+                            regionsList.find { it.name == selectedRegion }!!.href.replace(
+                                "2024",
+                                selectedYear
+                            )
+                        println("parameter=${parameter}, parameter2=${parameter2}")
+                        goToMajority(parameter, parameter2)
+                    },
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .width(150.dp)
+                        .height(50.dp)
+                        .fillMaxWidth(0.8f)
+                        .background(LightBlue, shape = RoundedCornerShape(10.dp)),
+                    colors = ButtonDefaults.buttonColors(containerColor = LightBlue)
+                ) {
+                    Text(
+                        text = "Пошук",
+                        color = Color.Black,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
-
             Spacer(modifier = Modifier.height(80.dp)) // Відступ від кінця сторінки
         }
     }
-    // Нижня панель з іконкою
     Footer(goBack, onIconClick = { isDialogVisible = !isDialogVisible })
 
     // Вікно діалогу
@@ -222,7 +230,7 @@ fun FilterRateLists(
                         }
 
                         isDialogVisible = false
-                        clearCurrentUser(context) // Виклик нової функції
+                        clearCurrentUser(context) // Виклик функції очищення поточного користувача
                         loginViewModel.logOut()
                     }
                 } else {
@@ -235,7 +243,7 @@ fun FilterRateLists(
     }
 }
 
-// Для ExposedDropdownMenuBox та ще 2 - пояснюємо, що це експерементальні штуки
+// Для ExposedDropdownMenuBox та ще 2 - пояснюємо, що це експерементальні інструменти
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SelectWithLabel(label: String, options: List<String>, selectedOption: String,
@@ -333,7 +341,6 @@ fun SelectWithLabel(label: String, options: List<String>, selectedOption: String
             }
             LaunchedEffect(expanded) {
                 if (expanded) {
-                    // Scroll to show the bottom menu items.
                     scrollState.scrollTo(scrollState.maxValue)
                 }
             }

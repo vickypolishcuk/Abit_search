@@ -15,60 +15,8 @@ import com.example.course_work.models.UniversityData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jsoup.nodes.Element
-
-import kotlinx.serialization.*
-import kotlinx.serialization.json.*
-import java.io.File
-import android.content.Context
-import android.content.res.Resources
-import com.example.course_work.R
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.map
-import java.util.concurrent.Semaphore
-
-//@Serializable
-//data class SearchNew(
-//    val okr: String, // окр (магістр / бакалавр)
-//    val status: String, // статус
-//    val numberOfPlace: String, // номер у списку
-//    val priority: String, // пріоритет заяви
-//    val point: String, // конкурсний бал
-//    val sbo: String, // середній бал документа про освіту
-//    val consistOfSubjects: List<String>,// складові конкурсного балу
-//    val consistOfPoint: List<String>,// складові конкурсного балу
-//    val university: String, // навчальний заклад
-//    val majority: String, // спеціальність
-//    val kvota: String, // квота
-//    val doc: String, // документи
-//)
-//
-//@Serializable
-//data class DataWrapper(
-//    val name: String,
-//    @Contextual val data: SearchNew
-//)
-//
-//fun parser(context: Context) {
-////    val fileName = "data2024.json" // Назва JSON файлу раніше ти надав мені код
-//
-//    val inputStream = context.resources.openRawResource(R.raw.data2024)
-//    val jsonString = inputStream.bufferedReader().use { it.readText() }
-//
-//    // Декодуємо JSON у список DataWrapper
-//    val dataList = Json.decodeFromString<List<DataWrapper>>(jsonString)
-//
-//    // Фільтруємо об'єкти та отримуємо список типу List<Search>
-//    val filteredResults: List<SearchNew> = dataList
-//        .filter { it.name == "Name2" } // Фільтрація за ім'ям
-//        .map { it.data } // Отримуємо лише Search
-//
-//    // Вивід результату
-//    println("Знайдені об'єкти:")
-//    filteredResults.forEach { println(it) }
-//}
 
 fun trustAllCertificates() {
     val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
@@ -87,7 +35,7 @@ fun trustAllCertificates() {
     HttpsURLConnection.setDefaultHostnameVerifier { _, _ -> true }
 }
 
-// Функція для парсингу інформації про спеціальність
+// Функція для отримання інформації про спеціальність
 suspend fun parseMajorityInfo(rateListHref: String): MajorityInfo? = withContext(Dispatchers.IO) {
     trustAllCertificates()
 
@@ -132,7 +80,7 @@ suspend fun parseMajorityInfo(rateListHref: String): MajorityInfo? = withContext
     data
 }
 
-// для сторінки спеціальностей, повертаємо інформацію про всі спеціальності
+// Функція отримання списку спеціальностей
 suspend fun parseMajority(parameter: String): List<Majority> = withContext(Dispatchers.IO) {
 
     trustAllCertificates()
@@ -165,7 +113,7 @@ suspend fun parseMajority(parameter: String): List<Majority> = withContext(Dispa
                 val institution = titleElement?.nextElementSibling()?.text()?.trim() ?: "" // Інститут
                 val descriptionText = cells[1].select(".secondary-text").text().trim()
                 // Очищаємо опис від зайвої інформації (до першого появлення "Заяв" чи інших даних)
-                val description = descriptionText.split("Заяв")[0].trim() // Певний опис
+                val description = descriptionText.split("Заяв")[0].trim() // Опис
                 val name = titleElement?.text()?.trim() ?: "" // Спеціальність
                 val freePlaceText = cells[2].text().trim() // Бюджетні місця
                 val freePlace = freePlaceText.split("max")[0].trim()
@@ -191,12 +139,12 @@ suspend fun getRegions(): List<Regions> = withContext(Dispatchers.IO) {
         val url = "https://abit-poisk.org.ua/rate2024"
         val document: Document = Jsoup.connect(url).get()
 
-        // Вибір всіх елементів <a> всередині таблиці з університетами
+        // Вибір всіх елементів row всередині таблиці з університетами
         val rows = document.select("tr")
 
         val regions = rows.mapNotNull { row ->
             val regionLink = row.select("a[href]").firstOrNull()
-            // Перевірка чи є тег <a> та чи є місця в університеті, і якщо так, то витягнення назви та посилання
+            // Перевірка чи є тег <a> та чи є місця в університеті, і якщо так, то отримуємо назву та посилання
             if (regionLink != null) {
                 val regionsName = regionLink.text().trim()
                 val regionsUrl = regionLink.attr("href")
@@ -218,11 +166,10 @@ suspend fun getUniversitiesInfo(regionHref: String, universityHref: String): Uni
     trustAllCertificates()
 
     // Завантаження HTML сторінки
-    val url = "https://abit-poisk.org.ua${regionHref}" // змінити регіон для інший університетів з інших регіонів
+    val url = "https://abit-poisk.org.ua${regionHref}"
 
     try {
         val document: Document = Jsoup.connect(url).get()
-        // val universityHref = "/rate2024/univer/174"
 
         val row: Element? = document.select("tr")
             .firstOrNull { row ->
@@ -243,7 +190,7 @@ suspend fun getUniversitiesInfo(regionHref: String, universityHref: String): Uni
     } catch (e: Exception) {
         // Логування помилки
         println("Error fetching data: ${e.message}")
-         // Повертаємо пустий список у випадку помилки
+         // Повертаємо пустий елемент у випадку помилки
         null
     }
 }
@@ -269,7 +216,7 @@ suspend fun parseRateList(parameter: String): List<RateData> = withContext(Dispa
             // Обробка отриманої HTML-сторінки
             val table = document.select("table")
 
-            // Ітерація по рядках таблиці та перетворення в масиви
+            // Ітерація по рядках таблиці
             val rows = table.select("tr")
 
             // Пропускаємо перший рядок, оскільки це заголовок таблиці
@@ -285,7 +232,7 @@ suspend fun parseRateList(parameter: String): List<RateData> = withContext(Dispa
                     val point = cells[3].text().trim() // конкурсний бал
                     val status = cells[4].text().trim() // Статус
                     val kvota = cells[6].text().trim() // Квота
-                    var doc = cells[7].text().trim() // Виконано вимоги
+                    var doc = cells[7].text().trim() // Виконання вимог
 
                     val subjectElements = cells[5].select("li")
                     val consistOfSubjects = mutableListOf<String>()
@@ -329,7 +276,7 @@ suspend fun parseRateList(parameter: String): List<RateData> = withContext(Dispa
                     )
                 }
             }
-            // Перевірка, чи містить сторінка посилання на наступну сторінку
+            // Перевірка, чи містить дана сторінка посилання на наступну сторінку
             val nextPageLink = "${parameter}/?page=${currentPage + 1}"
             val hasNextPage = document.select("a[href]").any { it.attr("href") == nextPageLink }
 
@@ -359,7 +306,7 @@ suspend fun getUniversitiesByRegion(regionUrl: String, year: String): List<Unive
                 val universityLink = row.select("a[href]").firstOrNull()
                 val numericData = row.select("td.text-right").map { it.text().trim() }
 
-                // Перевірка чи є бюджетні місця
+                // Перевірка чи є заяви на таку спеціальність
                 if (universityLink != null && numericData.size > 2 && numericData[2] != "0") {
                     val universityName = universityLink.text().trim()
                     val universityUrl = universityLink.attr("href")
@@ -386,28 +333,11 @@ suspend fun parseSearchAsync(
 ): List<Search> = coroutineScope {
     val baseUrl = "https://abit-poisk.org.ua"
     val universitiesList = getUniversitiesByRegion(region, year)
-//    val data = mutableListOf<Search>()
-//    val semaphore = Semaphore(5) // Обмеження на 5 паралельних запитів
-//
-//    val jobs = universitiesList.map { university ->
-//        async(Dispatchers.IO) {
-//            semaphore.acquire() // Займаємо "слот"
-//            try {
-//                parseUniversity(university, name, baseUrl, year, data)
-//            } catch (e: Exception) {
-//                println("Помилка при парсингу університету ${university.name}: ${e.message}")
-//            } finally {
-//                semaphore.release() // Звільняємо "слот"
-//            }
-//        }
-//    }
-//    jobs.awaitAll() // Чекаємо завершення всіх запущених задач
 
     val data = mutableListOf<Search>()
     val channel = Channel<UniversityData>(capacity = 5) // Канал для обмеження паралельних завдань
-    println("universitiesList.size=${universitiesList.size}")
 
-    val workerJobs = List(5) { // 5 паралельних "працівників"
+    val workerJobs = List(5) { // 5 паралельних запитів
         launch(Dispatchers.IO) {
             for (university in channel) {
                 try {
