@@ -12,18 +12,21 @@ import com.example.course_work.MainActivity
 import com.example.course_work.R
 import com.google.firebase.firestore.FirebaseFirestore
 import android.content.Context
+import com.example.course_work.models.InputData
 import com.example.course_work.models.Search
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 
-fun sendNotification(context: Context, searchData: List<Search>) {
+fun sendNotification(context: Context, searchData: List<Search>, inputData: InputData) {
     println("sendNotification")
     val intent = Intent(context, MainActivity::class.java).apply {
         flags = Intent.FLAG_ACTIVITY_NEW_TASK
         val searchDataJson = Json.encodeToString(searchData)
+        val inputDataJson = Json.encodeToString(inputData)
         putExtra("updated_data", searchDataJson)  // передача даних через повідомлення
+        putExtra("input_data", inputDataJson)
     }
 
     val pendingIntent = PendingIntent.getActivity(
@@ -59,7 +62,7 @@ fun sendNotification(context: Context, searchData: List<Search>) {
     notificationManager.notify(notificationId, notificationBuilder.build())
 }
 
-fun sendNotificationToCurrentUser(context: Context, searchData: List<Search>) {
+fun sendNotificationToCurrentUser(context: Context, searchData: List<Search>, inputData: InputData) {
     println("sendNotificationToCurrentUser")
     val db = FirebaseFirestore.getInstance()
 
@@ -71,7 +74,7 @@ fun sendNotificationToCurrentUser(context: Context, searchData: List<Search>) {
             .addOnSuccessListener { document ->
                 if (document.exists()) {
                     // Документ знайдено — викликаємо sendNotification
-                    sendNotification(context, searchData)
+                    sendNotification(context, searchData, inputData)
                 } else {
                     Log.w("Firestore", "No document found for token: $currentToken")
                 }

@@ -45,12 +45,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.course_work.functions.InputDataViewModel
 import com.example.course_work.functions.LoginViewModel
 import com.example.course_work.functions.SearchFunViewModel
 import com.example.course_work.functions.addHistoryItem
 import com.example.course_work.functions.clearCurrentUser
 import com.example.course_work.functions.getCurrentUser
 import com.example.course_work.models.History
+import com.example.course_work.models.InputData
 import com.example.course_work.models.Regions
 import com.example.course_work.ui.fixed_element.showErrorDialog
 import java.text.SimpleDateFormat
@@ -63,6 +65,7 @@ import java.util.Locale
 fun SearchPage(
     loginViewModel: LoginViewModel = viewModel(),
     searchFunViewModel: SearchFunViewModel,
+    inputDataViewModel: InputDataViewModel,
     goToFilterRateLists: () -> Unit,
     goToLogin: () -> Unit,
     goToRegistr: () -> Unit,
@@ -96,10 +99,22 @@ fun SearchPage(
     var currentOption by remember { mutableStateOf("2024") } // Поточний вибір (рік)
     var selectedRegion by remember { mutableStateOf(regionsList.first().name) }
     val searchResults by searchFunViewModel.searchResults.collectAsState() // Запис даних у пам'ять
+    val inputData by inputDataViewModel.inputData.collectAsState()
 
     LaunchedEffect(searchQuery) {
         if (!searchQuery.isNullOrEmpty()) {
             searchFunViewModel.setSearchResults(searchQuery)
+        }
+        if(inputData.surname.isNotEmpty() && inputData.name.isNotEmpty() && inputData.patronymic.isNotEmpty()
+            && inputData.selectedYear.isNotEmpty() && inputData.selectedRegion.isNotEmpty()){
+            surname = inputData.surname
+            name = inputData.name
+            patronymic = inputData.patronymic
+            currentOption = inputData.selectedYear
+            selectedRegion = inputData.selectedRegion
+        }
+        if (inputData.point.isNotEmpty()) {
+            point = inputData.point
         }
     }
 
@@ -554,7 +569,6 @@ fun SearchPage(
                                         Locale.getDefault()
                                     ) else it.toString()
                                 }} ${name[0].uppercaseChar()}. ${patronymic[0].uppercaseChar()}."
-                            println("pib=${pib}")
                             point = when {
                                 currentOption >= "2021" -> {
                                     point.toIntOrNull()?.let {
@@ -568,20 +582,41 @@ fun SearchPage(
                                 }
                                 else -> ""
                             }
+                            val newInputData = InputData(
+                                surname.lowercase().replaceFirstChar {
+                                    if (it.isLowerCase()) it.titlecase(
+                                        Locale.getDefault()
+                                    ) else it.toString()
+                                },
+                                name[0].uppercaseChar().toString(),
+                                patronymic[0].uppercaseChar().toString(),
+                                currentOption,
+                                selectedRegion,
+                                point
+                            )
+                            inputDataViewModel.setInputData(newInputData)
                             searchFunViewModel.search(
                                 context,
                                 pib,
                                 currentOption,
-                                regionsList.find { it.name == selectedRegion }!!.href
+                                regionsList.find { it.name == selectedRegion }!!.href,
+                                newInputData
                             ) { results ->
                                 if (isLoggedIn) {
                                     val currentUser = getCurrentUser(context)!!
-                                    println("currentUser=${currentUser}")
                                     val currentDate = SimpleDateFormat(
                                         "dd.MM.yyyy",
                                         Locale.getDefault()
                                     ).format(Date())
-                                    val query = History(pib, currentOption, selectedRegion, point, currentDate, results)
+                                    val filteredResults: List<Search> = if (point != "") {
+                                        results.filter { search ->
+                                            // Порівнюємо середній бал документа (search.sbo) з введеним значенням (point)
+                                            search.sbo == point
+                                        }
+                                    } else {
+                                        results
+                                    }
+                                    val query = History(pib, currentOption, selectedRegion, point, currentDate, filteredResults)
                                     addHistoryItem(currentUser, query) // Викликається після завершення парсингу
                                 }
                             }
@@ -612,7 +647,9 @@ fun SearchPage(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Обробка даних, зачекайте будь ласка. \nЯкщо після завершення пошуку" +
+                        text = "Обробка даних, зачекайте будь ласка. \n\nЦей процес може зайняти кілька" +
+                                " десятків хвилин, тому рекомендуємо увімкнути сповіщення, щоб програма" +
+                                " змогла повідомити Вас про завершення пошуку.\nЯкщо після завершення пошуку" +
                                 " Ви не бачите результат, отже інформації з такими параметрами не існує.",
                         style = TextStyle(
                             fontSize = 14.sp,

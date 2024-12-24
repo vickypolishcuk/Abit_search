@@ -39,7 +39,9 @@ import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import com.example.course_work.functions.InputDataViewModel
 import com.example.course_work.functions.getCurrentUser
+import com.example.course_work.models.InputData
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessaging
@@ -124,8 +126,10 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val loginViewModel: LoginViewModel = viewModel()
                 val searchFunViewModel: SearchFunViewModel = viewModel()
+                val inputDataViewModel: InputDataViewModel = viewModel()
 
                 val message = intent.getStringExtra("updated_data")
+                val input = intent.getStringExtra("input_data")
 
                 val regions = remember { mutableStateOf<List<Regions>>(emptyList()) }
                 val isDataLoaded = remember { mutableStateOf(false) }
@@ -137,6 +141,11 @@ class MainActivity : ComponentActivity() {
                 }
                 LaunchedEffect(Unit) {
                     try {
+                        input?.let {
+                            val inputData = Json.decodeFromString<InputData>(it)
+                            // Оновлюємо список пошуку, передавши дані до ViewModel
+                            inputDataViewModel.setInputData(inputData)
+                        }
                         regions.value = getRegions()
                         isDataLoaded.value = true
                         message?.let {
@@ -161,6 +170,7 @@ class MainActivity : ComponentActivity() {
                                 SearchPage(
                                     loginViewModel = loginViewModel,
                                     searchFunViewModel = searchFunViewModel,
+                                    inputDataViewModel = inputDataViewModel,
                                     goToFilterRateLists = { navController.navigate(route = Routes.FilterRateListsPage.name) },
                                     goToLogin = { navController.navigate(route = Routes.LoginPage.name) },
                                     goToRegistr = { navController.navigate(route = Routes.RegistrPage.name) },

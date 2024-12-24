@@ -97,7 +97,7 @@ fun FilterRateLists(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Фільтр",
+                    text = "Фільтр для пошуку рейтингових списків",
                     style = Title,
                     modifier = Modifier
                         .width(262.dp)
@@ -181,7 +181,6 @@ fun FilterRateLists(
                                 "2024",
                                 selectedYear
                             )
-                        println("parameter=${parameter}, parameter2=${parameter2}")
                         goToMajority(parameter, parameter2)
                     },
                     modifier = Modifier
