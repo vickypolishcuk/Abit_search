@@ -49,15 +49,18 @@ import com.example.course_work.ui.theme.LightYellow
 import com.example.course_work.ui.theme.Title
 import kotlinx.coroutines.launch
 import com.example.course_work.functions.HistoryViewModel
+import com.example.course_work.functions.InputDataViewModel
 import com.example.course_work.functions.clearCurrentUser
 import com.example.course_work.functions.clearUserHistoryFirestore
 import com.example.course_work.functions.getCurrentUser
+import com.example.course_work.models.InputData
 import com.example.course_work.models.Search
 import com.example.course_work.ui.icons.AppIcons
 
 @Composable
 fun HistoryPage(
     loginViewModel: LoginViewModel,
+    inputDataViewModel: InputDataViewModel,
     goBack: () -> Unit,
     goToHistory: () -> Unit,
     goToSearchPage: (List<Search>) -> Unit,
@@ -170,7 +173,7 @@ fun HistoryPage(
                 } else {
                     history.indices.reversed().forEach { index ->
                         val searchQuery = history[index]
-                        HistoryItem(searchQuery, goToSearchPage)
+                        HistoryItem(searchQuery, goToSearchPage, inputDataViewModel)
                         Spacer(modifier = Modifier.height(8.dp)) // Проміжок між елементами
                     }
                 }
@@ -209,14 +212,26 @@ fun HistoryPage(
 }
 
 @Composable
-fun HistoryItem(searchQuery: History, goToSearchPage: (List<Search>) -> Unit) {
+fun HistoryItem(searchQuery: History, goToSearchPage: (List<Search>) -> Unit, inputDataViewModel: InputDataViewModel) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(80.dp)
             .background(Grey, shape = RoundedCornerShape(10.dp))
             .padding(16.dp)
-            .clickable { goToSearchPage(searchQuery.data) }
+            .clickable {
+                val parts = searchQuery.name.split(" ")
+                val newInputData = InputData(
+                    parts[0],
+                    parts[1][0].toString(),
+                    parts[2][0].toString(),
+                    searchQuery.year,
+                    searchQuery.region,
+                    searchQuery.point
+                )
+                inputDataViewModel.setInputData(newInputData)
+                goToSearchPage(searchQuery.data)
+            }
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),

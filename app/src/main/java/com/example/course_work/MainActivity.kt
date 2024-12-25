@@ -228,6 +228,7 @@ class MainActivity : ComponentActivity() {
                             composable(route = Routes.HistoryPage.name) {
                                 HistoryPage(
                                     loginViewModel = loginViewModel,
+                                    inputDataViewModel = inputDataViewModel,
                                     goBack = { navController.navigate(route = Routes.SearchPage.name) },
                                     goToHistory = { navController.navigate(route = Routes.HistoryPage.name) },
                                     goToSearchPage = { searchQuery ->
